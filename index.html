@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3d print shop</title>
+    <style>
+        :root {
+            --primary: #9a6b43;         /* Warm brown */
+            --primary-hover: #7d5433;   /* Darker brown */
+            --bg: #fcf9f5;              /* Very light warm cream */
+            --card-bg: #ffffff;
+            --text: #3d2c1d;            /* Deep warm brown for text */
+            --border: #e6d7cc;          /* Soft beige border */
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Logo and Title style */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            background: #f4ece4;
+            padding: 0.3rem 0.5rem;
+            border-radius: 8px;
+        }
+
+        h1 { 
+            margin: 0; 
+            font-size: 1.4rem; 
+            color: var(--text); 
+            text-transform: lowercase;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg);
+            padding: 0.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            color: var(--text);
+            transition: 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* Grid & Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f4ece4;
+        }
+
+        .card-content {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-title { font-size: 1.2rem; font-weight: bold; margin: 0 0 0.5rem 0; }
+        .card-price { color: #6e5233; font-weight: bold; font-size: 1.1rem; margin-bottom: 1rem; }
+        .card-desc { font-size: 0.9rem; color: #735d4c; margin-bottom: 1rem; flex-grow: 1; }
+
+        /* Forms & Inputs */
+        input, textarea, button, label.file-label {
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            background: #fff;
+            color: var(--text);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .file-upload-group {
+            margin-bottom: 0.75rem;
+            text-align: left;
+        }
+        .file-upload-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+            color: #735d4c;
+        }
+        input[type="file"] {
+            padding: 0.3rem;
+            background: #fcf9f5;
+            cursor: pointer;
+        }
+
+        button.btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.55rem 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        button.btn:hover { background: var(--primary-hover); }
+
+        button.btn-danger {
+            background: #b94a3c;
+        }
+        button.btn-danger:hover {
+            background: #963a2f;
+        }
+
+        /* Worker Panel Styles */
+        .worker-panel {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { background: #f4ece4; color: var(--text); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <div class="logo-icon">🖨️</div>
+            <h1>3d print shop</h1>
+        </div>
+        <div class="mode-toggle">
+            <button id="btn-customer" class="mode-btn active" onclick="switchMode('customer')">Customer Mode</button>
+            <button id="btn-worker" class="mode-btn" onclick="requestWorkerAccess()">Worker Mode</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- ================= CUSTOMER VIEW ================= -->
+        <div id="customer-view" class="view-section active">
+            <h2>Available 3D Prints</h2>
+            <p>Select an item, enter your name, and place your order! (No online payment required)</p>
+            
+            <div id="customer-products" class="grid">
+                <!-- Products load here dynamically -->
+            </div>
+        </div>
+
+        <!-- ================= WORKER VIEW ================= -->
+        <div id="worker-view" class="view-section">
+            <h2>Worker Dashboard</h2>
+            
+            <div class="worker-panel">
+                <h3>Add New 3D Print</h3>
+                <form id="add-product-form" onsubmit="addProduct(event)">
+                    <input type="text" id="p-name" placeholder="Print Name" required>
+                    <textarea id="p-desc" placeholder="Description" rows="2" required></textarea>
+                    <input type="number" id="p-price" placeholder="Price (£)" step="0.01" required>
+                    
+                    <div class="file-upload-group">
+                        <label for="p-image">Choose Photo from Library:</label>
+                        <input type="file" id="p-image" accept="image/*" required>
+                    </div>
+
+                    <button type="submit" class="btn">Add Print to Store</button>
+                </form>
+            </div>
+
+            <h3>Incoming Customer Orders</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Item Ordered</th>
+                            <th>Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        <!-- Orders load here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Manage Current Prints & Prices</h3>
+            <div id="worker-products" class="grid" style="margin-top: 1rem;">
+                <!-- Worker product cards load here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // CHANGE YOUR WORKER PASSWORD HERE
+        const WORKER_PASSWORD = "9938663839";
+
+        // Initial mock data if localStorage is empty
+        const defaultProducts = [
+            {
+                id: 1,
+                name: "Flexi T-Rex",
+                description: "An articulated 3D printed dinosaur toy that wiggles and bends.",
+                price: 12.50,
+                image: "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 2,
+                name: "Geometric Planter",
+                description: "Modern low-poly pot perfect for small succulents.",
+                price: 15.00,
+                image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=500&q=80"
+            }
+        ];
+
+        let products = JSON.parse(localStorage.getItem('3d_products')) || defaultProducts;
+        let orders = JSON.parse(localStorage.getItem('3d_orders')) || [];
+        let isWorkerAuthenticated = false;
+
+        function saveToStorage() {
+            localStorage.setItem('3d_products', JSON.stringify(products));
+            localStorage.setItem('3d_orders', JSON.stringify(orders));
+        }
+
+        function requestWorkerAccess() {
+            if (isWorkerAuthenticated) {
+                switchMode('worker');
+                return;
+            }
+
+            const password = prompt("Enter worker password:");
+            if (password === null) return;
+
+            if (password === WORKER_PASSWORD) {
+                isWorkerAuthenticated = true;
+                switchMode('worker');
+            } else {
+                alert("Incorrect password!");
+            }
+        }
+
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+
+            if (mode === 'customer') {
+                document.getElementById('btn-customer').classList.add('active');
+                document.getElementById('customer-view').classList.add('active');
+                renderCustomerStore();
+            } else {
+                document.getElementById('btn-worker').classList.add('active');
+                document.getElementById('worker-view').classList.add('active');
+                renderWorkerDashboard();
+            }
+        }
+
+        // --- CUSTOMER FUNCTIONS ---
+        function renderCustomerStore() {
+            const container = document.getElementById('customer-products');
+            container.innerHTML = '';
+
+            if (products.length === 0) {
+                container.innerHTML = '<p>No prints available right now. Check back later!</p>';
+                return;
+            }
+
+            products.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="${p.image}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+                    <div class="card-content">
+                        <div class="card-title">${p.name}</div>
+                        <div class="card-price">£${p.price.toFixed(2)}</div>
+                        <div class="card-desc">${p.description}</div>
+                        <input type="text" id="cust-name-${p.id}" placeholder="Enter your name...">
+                        <button class="btn" onclick="placeOrder(${p.id})">Order Now</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function placeOrder(productId) {
+            const nameInput = document.getElementById(`cust-name-${productId}`);
+            const customerName = nameInput.value.trim();
+
+            if (!customerName) {
+                alert('Please enter your name before ordering!');
+                nameInput.focus();
+                return;
+            }
+
+            const product = products.find(p => p.id === productId);
+            
+            orders.push({
+                id: Date.now(),
+                customerName: customerName,
+                productName: product.name,
+                price: product.price
+            });
+
+            saveToStorage();
+            alert(`Thank you, ${customerName}! Your order for "${product.name}" has been placed. The worker has been notified.`);
+            nameInput.value = '';
+        }
+
+        // --- WORKER FUNCTIONS ---
+        function addProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('p-name').value;
+            const desc = document.getElementById('p-desc').value;
+            const price = parseFloat(document.getElementById('p-price').value);
+            const imageInput = document.getElementById('p-image');
+
+            if (imageInput.files && imageInput.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    const base64Image = event.target.result;
+
+                    const newProduct = {
+                        id: Date.now(),
+                        name,
+                        description: desc,
+                        price,
+                        image: base64Image
+                    };
+
+                    products.push(newProduct);
+                    saveToStorage();
+                    document.getElementById('add-product-form').reset();
+                    renderWorkerDashboard();
+                    alert('Print added successfully with your photo!');
+                };
+
+                reader.readAsDataURL(imageInput.files[0]);
+            }
+        }
+
+        function deleteProduct(productId) {
+            if (confirm('Are you sure you want to remove this print?')) {
+                products = products.filter(p => p.id !== productId);
+                saveToStorage();
+                renderWorkerDashboard();
+            }
+        }
+
+        function updatePrice(productId) {
+            const newPriceInput = document.getElementById(`price-input-${productId}`);
+            const newPrice = parseFloat(newPriceInput.value);
+
+            if (isNaN(newPrice) || newPrice < 0) {
+                alert('Please enter a valid price.');
+                return;
+            }
+
+            const product = products.find(p => p.id === productId);
+            product.price = newPrice;
+            saveToStorage();
+            alert('Price updated successfully!');
+            renderWorkerDashboard();
+        }
+
+        function fulfillOrder(orderId) {
+            orders = orders.filter(o => o.id !== orderId);
+            saveToStorage();
+            renderWorkerDashboard();
+        }
+
+        function renderWorkerDashboard() {
+            // Render Orders Table
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #735d4c;">No pending orders.</td></tr>`;
+            } else {
+                orders.forEach(o => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${o.customerName}</strong></td>
+                        <td>${o.productName}</td>
+                        <td>£${o.price.toFixed(2)}</td>
+                        <td><button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;" onclick="fulfillOrder(${o.id})">Mark Done / Remove</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Render Worker Product Management Grid
+            const container = document.getElementById('worker-products');
+            container.innerHTML = '';
+
+            products.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="${p.image}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+                    <div class="card-content">
+                        <div class="card-title">${p.name}</div>
+                        <label style="font-size: 0.85rem; font-weight: bold;">Change Price (£):</label>
+                        <input type="number" id="price-input-${p.id}" value="${p.price}" step="0.01">
+                        <button class="btn" style="margin-bottom: 0.5rem;" onclick="updatePrice(${p.id})">Update Price</button>
+                        <button class="btn btn-danger" onclick="deleteProduct(${p.id})">Delete Print</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Initial Load on startup
+        renderCustomerStore();
+    </script>
+</body>
+</html>
