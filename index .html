@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3d print shop</title>
+    <style>
+        :root {
+            --primary: #9a6b43;
+            --primary-hover: #7d5433;
+            --bg: #fcf9f5;
+            --card-bg: #ffffff;
+            --text: #3d2c1d;
+            --border: #e6d7cc;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            background: #f4ece4;
+            padding: 0.3rem 0.5rem;
+            border-radius: 8px;
+        }
+
+        h1 { 
+            margin: 0; 
+            font-size: 1.4rem; 
+            color: var(--text); 
+            text-transform: lowercase;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg);
+            padding: 0.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            color: var(--text);
+            transition: 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f4ece4;
+        }
+
+        .card-content {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-title { font-size: 1.2rem; font-weight: bold; margin: 0 0 0.5rem 0; }
+        .card-price { color: #6e5233; font-weight: bold; font-size: 1.1rem; margin-bottom: 1rem; }
+        .card-desc { font-size: 0.9rem; color: #735d4c; margin-bottom: 1rem; flex-grow: 1; }
+
+        input, textarea, button {
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            background: #fff;
+            color: var(--text);
+        }
+
+        .file-upload-group {
+            margin-bottom: 0.75rem;
+            text-align: left;
+        }
+        .file-upload-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+            color: #735d4c;
+        }
+        input[type="file"] {
+            padding: 0.3rem;
+            background: #fcf9f5;
+            cursor: pointer;
+        }
+
+        button.btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.55rem 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        button.btn:hover { background: var(--primary-hover); }
+        button.btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        button.btn-danger { background: #b94a3c; }
+        button.btn-danger:hover { background: #963a2f; }
+
+        .worker-panel {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { background: #f4ece4; color: var(--text); }
+    </style>
+
+    <!-- 引入 Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <div class="logo-icon">🖨️</div>
+            <h1>3d print shop</h1>
+        </div>
+        <div class="mode-toggle">
+            <button id="btn-customer" class="mode-btn active" onclick="switchMode('customer')">Customer Mode</button>
+            <button id="btn-worker" class="mode-btn" onclick="requestWorkerAccess()">Worker Mode</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- CUSTOMER VIEW -->
+        <div id="customer-view" class="view-section active">
+            <h2>Available 3D Prints</h2>
+            <p>Select an item, enter your name, and place your order!</p>
+            <div id="customer-products" class="grid"></div>
+        </div>
+
+        <!-- WORKER VIEW -->
+        <div id="worker-view" class="view-section">
+            <h2>Worker Dashboard</h2>
+            
+            <div class="worker-panel">
+                <h3>Add New 3D Print</h3>
+                <form id="add-product-form" onsubmit="addProduct(event)">
+                    <input type="text" id="p-name" placeholder="Print Name" required>
+                    <textarea id="p-desc" placeholder="Description" rows="2" required></textarea>
+                    <input type="number" id="p-price" placeholder="Price (£)" step="0.01" required>
+                    
+                    <div class="file-upload-group">
+                        <label for="p-image">Choose Photo from Device:</label>
+                        <input type="file" id="p-image" accept="image/*" required>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="btn">Add Print to Store</button>
+                </form>
+            </div>
+
+            <h3>Incoming Customer Orders</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Item Ordered</th>
+                            <th>Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body"></tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Manage Current Prints & Prices</h3>
+            <div id="worker-products" class="grid" style="margin-top: 1rem;"></div>
+        </div>
+    </main>
+
+    <script>
+        const WORKER_PASSWORD = "9938663839";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnqujbPGqN7zR4mJjZKg2hg_ehfFZ37Zs",
+            authDomain: "my-3d-print-shop-cab11.firebaseapp.com",
+            projectId: "my-3d-print-shop-cab11",
+            storageBucket: "my-3d-print-shop-cab11.firebasestorage.app",
+            messagingSenderId: "941351204336",
+            appId: "1:941351204336:web:a96ae3e608de26afbc5935",
+            measurementId: "G-N715NEQPSP"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let products = [];
+        let orders = [];
+        let isWorkerAuthenticated = false;
+
+        // 即時資料同步
+        db.collection("products").onSnapshot((snapshot) => {
+            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderCustomerStore();
+            if (isWorkerAuthenticated) renderWorkerDashboard();
+        });
+
+        db.collection("orders").onSnapshot((snapshot) => {
+            orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            if (isWorkerAuthenticated) renderWorkerDashboard();
+        });
+
+        function requestWorkerAccess() {
+            if (isWorkerAuthenticated) {
+                switchMode('worker');
+                return;
+            }
+            const password = prompt("Enter worker password:");
+            if (password === WORKER_PASSWORD) {
+                isWorkerAuthenticated = true;
+                switchMode('worker');
+            } else if (password !== null) {
+                alert("Incorrect password!");
+            }
+        }
+
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+
+            if (mode === 'customer') {
+                document.getElementById('btn-customer').classList.add('active');
+                document.getElementById('customer-view').classList.add('active');
+                renderCustomerStore();
+            } else {
+                document.getElementById('btn-worker').classList.add('active');
+                document.getElementById('worker-view').classList.add('active');
+                renderWorkerDashboard();
+            }
+        }
+
+        // 圖片自動壓縮工具 (將大照片壓縮至 Max 800px)
+        function compressImage(file, maxWidth = 800, quality = 0.7) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 導出壓縮後的 Base64 字串
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                };
+            });
+        }
+
+        // --- CUSTOMER FUNCTIONS ---
+        function renderCustomerStore() {
+            const container = document.getElementById('customer-products');
+            container.innerHTML = '';
+
+            if (products.length === 0) {
+                container.innerHTML = '<p>No prints available right now. Check back later!</p>';
+                return;
+            }
+
+            products.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="${p.image}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+                    <div class="card-content">
+                        <div class="card-title">${p.name}</div>
+                        <div class="card-price">£${Number(p.price).toFixed(2)}</div>
+                        <div class="card-desc">${p.description}</div>
+                        <input type="text" id="cust-name-${p.id}" placeholder="Enter your name...">
+                        <button class="btn" onclick="placeOrder('${p.id}')">Order Now</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function placeOrder(productId) {
+            const nameInput = document.getElementById(`cust-name-${productId}`);
+            const customerName = nameInput.value.trim();
+
+            if (!customerName) {
+                alert('Please enter your name before ordering!');
+                nameInput.focus();
+                return;
+            }
+
+            const product = products.find(p => p.id === productId);
+
+            await db.collection("orders").add({
+                customerName: customerName,
+                productName: product.name,
+                price: product.price,
+                createdAt: Date.now()
+            });
+
+            alert(`Thank you, ${customerName}! Your order for "${product.name}" has been placed.`);
+            nameInput.value = '';
+        }
+
+        // --- WORKER FUNCTIONS ---
+        async function addProduct(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            const fileInput = document.getElementById('p-image');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select an image file.");
+                return;
+            }
+
+            const name = document.getElementById('p-name').value;
+            const desc = document.getElementById('p-desc').value;
+            const price = parseFloat(document.getElementById('p-price').value);
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Processing & Saving...";
+
+                // 1. 自動把照片壓縮成輕量化的資料
+                const compressedImageBase64 = await compressImage(file);
+
+                // 2. 直接將文字與壓縮照片寫入 Firestore
+                await db.collection("products").add({
+                    name,
+                    description: desc,
+                    price,
+                    image: compressedImageBase64,
+                    createdAt: Date.now()
+                });
+
+                document.getElementById('add-product-form').reset();
+                alert('Print added successfully to cloud!');
+            } catch (error) {
+                console.error("Save error:", error);
+                alert("Failed to save product: " + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Add Print to Store";
+            }
+        }
+
+        async function deleteProduct(productId) {
+            if (confirm('Are you sure you want to remove this print?')) {
+                await db.collection("products").doc(productId).delete();
+            }
+        }
+
+        async function updatePrice(productId) {
+            const newPrice = parseFloat(document.getElementById(`price-input-${productId}`).value);
+            if (isNaN(newPrice) || newPrice < 0) {
+                alert('Please enter a valid price.');
+                return;
+            }
+            await db.collection("products").doc(productId).update({ price: newPrice });
+            alert('Price updated successfully!');
+        }
+
+        async function fulfillOrder(orderId) {
+            await db.collection("orders").doc(orderId).delete();
+        }
+
+        function renderWorkerDashboard() {
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #735d4c;">No pending orders.</td></tr>`;
+            } else {
+                orders.forEach(o => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${o.customerName}</strong></td>
+                        <td>${o.productName}</td>
+                        <td>£${Number(o.price).toFixed(2)}</td>
+                        <td><button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;" onclick="fulfillOrder('${o.id}')">Mark Done / Remove</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            const container = document.getElementById('worker-products');
+            container.innerHTML = '';
+
+            products.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="${p.image}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+                    <div class="card-content">
+                        <div class="card-title">${p.name}</div>
+                        <label style="font-size: 0.85rem; font-weight: bold;">Change Price (£):</label>
+                        <input type="number" id="price-input-${p.id}" value="${p.price}" step="0.01">
+                        <button class="btn" style="margin-bottom: 0.5rem;" onclick="updatePrice('${p.id}')">Update Price</button>
+                        <button class="btn btn-danger" onclick="deleteProduct('${p.id}')">Delete Print</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
